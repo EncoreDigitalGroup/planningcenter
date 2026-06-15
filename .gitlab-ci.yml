@@ -41,7 +41,6 @@ static_analysis:
     stage: quality
     extends: .php:static-analysis
     interruptible: true
-    needs: [ code_style ]
     variables:
         PHPSTAN_PATHS: "src/"
     image:
@@ -55,7 +54,6 @@ test:
     stage: quality
     extends: .php:test
     interruptible: true
-    needs: [ code_style ]
     image:
         name: "$PHP_CI_IMAGE"
         pull_policy: always
