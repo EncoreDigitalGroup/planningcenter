@@ -36,9 +36,6 @@ class Person
 
     protected string $endpoint = self::ENDPOINT;
 
-    // Relationships
-    private ?Paginator $emails = null;
-
     public function __construct(string $clientId, string $clientSecret)
     {
         $this->attributes = new Collection;
@@ -369,29 +366,41 @@ class Person
         return $this->getAttribute("remote_id");
     }
 
+    public function email(): Email
+    {
+        $personId = $this->id();
+        if ($personId === null) {
+            throw new InvalidArgumentException("Cannot create an email for a person without an ID.");
+        }
+
+        $email = new Email($this->clientId, $this->clientSecret, $personId);
+        $email->setAuthType($this->authType);
+
+        return $email;
+    }
+
     /**
-     * Get emails for this person (lazy-loaded)
+     * Get emails for this person
      *
      * @param  array<string, mixed>  $query  Optional query parameters
      */
     public function emails(array $query = []): Paginator
     {
-        if (!$this->emails instanceof Paginator) {
-            $personId = $this->id();
-            if ($personId === null) {
-                throw new InvalidArgumentException("Cannot fetch emails for a person without an ID.");
-            }
-
-            $emailInstance = new Email($this->clientId, $this->clientSecret);
-            $emailInstance->setAuthType($this->authType);
-            $response = $emailInstance->client()->get(
-                $emailInstance->hostname() . "/people/v2/people/{$personId}/emails",
-                $this->mergeQueryParameters($query)
-            );
-            $this->emails = $emailInstance->buildPaginatorFromResponse($response);
+        $personId = $this->id();
+        if ($personId === null) {
+            throw new InvalidArgumentException("Cannot fetch emails for a person without an ID.");
         }
 
-        return $this->emails;
+        $emailInstance = new Email($this->clientId, $this->clientSecret);
+        $emailInstance->setAuthType($this->authType);
+
+        $response = $emailInstance->client()->get(
+            $emailInstance->hostname() . "/people/v2/people/{$personId}/emails",
+            $this->mergeQueryParameters($query)
+        );
+        $response->throw();
+
+        return $emailInstance->buildPaginatorFromResponse($response);
     }
 
     protected function dateAttributes(): array

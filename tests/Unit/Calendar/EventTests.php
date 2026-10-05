@@ -5,6 +5,7 @@ namespace Tests\Unit\Calendar;
 use EncoreDigitalGroup\PlanningCenter\PlanningCenter;
 use EncoreDigitalGroup\PlanningCenter\Resources\CalendarEvent;
 use EncoreDigitalGroup\PlanningCenter\Resources\CalendarTag;
+use EncoreDigitalGroup\PlanningCenter\Resources\EventInstance;
 use EncoreDigitalGroup\PlanningCenter\Support\Paginator;
 use Illuminate\Support\Collection;
 use Tests\Helpers\TestConstants;
@@ -50,5 +51,20 @@ describe("Calendar Event Tests", function (): void {
             ->and($tags->items()->first()->id())->toBe(CalendarMocks::TAG_ID)
             ->and($tags->items()->first()->name())->toBe(CalendarMocks::TAG_NAME)
             ->and($tags->response())->not->toBeNull();
+    });
+
+    test("CalendarEvent: Can Get Event Instances For Event", function (): void {
+        $event = PlanningCenter::make()
+            ->withBasicAuth(TestConstants::CLIENT_ID, TestConstants::CLIENT_SECRET)
+            ->calendar()
+            ->event()
+            ->withId(CalendarMocks::EVENT_ID)
+            ->get();
+
+        $instances = $event->eventInstances();
+
+        expect($instances)->toBeInstanceOf(Paginator::class)
+            ->and($instances->items()->first())->toBeInstanceOf(EventInstance::class)
+            ->and($instances->response())->not->toBeNull();
     });
 })->group("calendar.event");

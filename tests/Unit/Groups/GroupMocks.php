@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Encore Digital Group - Planning Center PHP SDK
  * Copyright (c) 2024. Encore Digital Group
@@ -54,6 +55,29 @@ class GroupMocks extends BaseMock
         self::useSpecificGroupEvent();
         self::useGroupEnrollmentCollection();
         self::useSpecificGroupEnrollment();
+    }
+
+    public static function useGroupEventWithMixedCaseRelationship(): void
+    {
+        HttpClient::fake([
+            self::HOSTNAME . GroupEvent::ENDPOINT . "/99" => function ($request) {
+                return match ($request->method()) {
+                    "GET" => HttpClient::response([
+                        "data" => [[
+                            "type" => "Event",
+                            "id" => "99",
+                            "attributes" => ["name" => "Test Event"],
+                            "relationships" => [
+                                "Group" => [
+                                    "data" => ["type" => "Group", "id" => self::GROUP_ID],
+                                ],
+                            ],
+                        ]],
+                    ]),
+                    default => HttpClient::response([], 405),
+                };
+            },
+        ]);
     }
 
     protected static function useGroupCollection(): void
@@ -191,29 +215,6 @@ class GroupMocks extends BaseMock
             self::HOSTNAME . GroupEvent::ENDPOINT . "/1" => function ($request) {
                 return match ($request->method()) {
                     "GET" => HttpClient::response(self::useSingleResponse(ObjectType::GroupEvent)),
-                    default => HttpClient::response([], 405),
-                };
-            },
-        ]);
-    }
-
-    public static function useGroupEventWithMixedCaseRelationship(): void
-    {
-        HttpClient::fake([
-            self::HOSTNAME . GroupEvent::ENDPOINT . "/99" => function ($request) {
-                return match ($request->method()) {
-                    "GET" => HttpClient::response([
-                        "data" => [[
-                            "type" => "Event",
-                            "id" => "99",
-                            "attributes" => ["name" => "Test Event"],
-                            "relationships" => [
-                                "Group" => [
-                                    "data" => ["type" => "Group", "id" => self::GROUP_ID],
-                                ],
-                            ],
-                        ]],
-                    ]),
                     default => HttpClient::response([], 405),
                 };
             },

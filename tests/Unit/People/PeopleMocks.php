@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Encore Digital Group - Planning Center PHP SDK
  * Copyright (c) 2024. Encore Digital Group
@@ -17,6 +18,8 @@ class PeopleMocks extends BaseMock
 {
     use HasClient;
 
+    private static array $failures = [];
+
     public const string PERSON_ID = "1";
     public const string FIRST_NAME = "John";
     public const string LAST_NAME = "Smith";
@@ -25,16 +28,45 @@ class PeopleMocks extends BaseMock
 
     public static function setup(): void
     {
+        self::$failures = [];
         self::useProfileCollection();
         self::useSpecificProfile();
         self::useEmailCollection();
         self::useSpecificEmail();
     }
 
+    public static function useFailedProfileCollection(string $method, int $status): void
+    {
+        self::$failures["profile_collection"] = [
+            "method" => $method,
+            "status" => $status,
+        ];
+    }
+
+    public static function useFailedSpecificEmail(string $method, int $status): void
+    {
+        self::$failures["specific_email"] = [
+            "method" => $method,
+            "status" => $status,
+        ];
+    }
+
+    public static function useFailedEmailCollection(string $method, int $status): void
+    {
+        self::$failures["email_collection"] = [
+            "method" => $method,
+            "status" => $status,
+        ];
+    }
+
     public static function useProfileCollection(): void
     {
         HttpClient::fake([
             self::HOSTNAME . Person::ENDPOINT => function ($request) {
+                if (($response = self::failureResponse("profile_collection", $request)) !== null) {
+                    return $response;
+                }
+
                 return match ($request->method()) {
                     "POST" => HttpClient::response(self::useSingleResponse(ObjectType::Profile)),
                     "GET", => HttpClient::response(self::useCollectionResponse(ObjectType::Profile)),
@@ -61,9 +93,27 @@ class PeopleMocks extends BaseMock
     {
         HttpClient::fake([
             self::HOSTNAME . Person::ENDPOINT . "/1/emails" => function ($request) {
+                if (($response = self::failureResponse("email_collection", $request)) !== null) {
+                    return $response;
+                }
+
                 return match ($request->method()) {
                     "POST" => HttpClient::response(self::useSingleResponse(ObjectType::Email)),
                     "GET", => HttpClient::response(self::useCollectionResponse(ObjectType::Email)),
+                    default => HttpClient::response([], 405),
+                };
+            },
+        ]);
+
+        HttpClient::fake([
+            self::HOSTNAME . Person::ENDPOINT . "/1/emails/1" => function ($request) {
+                if (($response = self::failureResponse("specific_email", $request)) !== null) {
+                    return $response;
+                }
+
+                return match ($request->method()) {
+                    "PUT", "PATCH", "GET", => HttpClient::response(self::useSingleResponse(ObjectType::Email)),
+                    "DELETE" => HttpClient::response(self::deleteResponse()),
                     default => HttpClient::response([], 405),
                 };
             },
@@ -74,6 +124,10 @@ class PeopleMocks extends BaseMock
     {
         HttpClient::fake([
             self::HOSTNAME . Email::ENDPOINT => function ($request) {
+                if (($response = self::failureResponse("specific_email", $request)) !== null) {
+                    return $response;
+                }
+
                 return match ($request->method()) {
                     "POST" => HttpClient::response(self::useSingleResponse(ObjectType::Email)),
                     default => HttpClient::response([], 405),
@@ -83,6 +137,10 @@ class PeopleMocks extends BaseMock
 
         HttpClient::fake([
             self::HOSTNAME . Email::ENDPOINT . "/1" => function ($request) {
+                if (($response = self::failureResponse("specific_email", $request)) !== null) {
+                    return $response;
+                }
+
                 return match ($request->method()) {
                     "PUT", "PATCH", "GET", => HttpClient::response(self::useSingleResponse(ObjectType::Email)),
                     "DELETE" => HttpClient::response(self::deleteResponse()),
@@ -172,5 +230,15 @@ class PeopleMocks extends BaseMock
                 ],
             ],
         ];
+    }
+
+    private static function failureResponse(string $key, $request): mixed
+    {
+        $failure = self::$failures[$key] ?? null;
+        if ($failure !== null && $request->method() === $failure["method"]) {
+            return HttpClient::response([], $failure["status"]);
+        }
+
+        return null;
     }
 }

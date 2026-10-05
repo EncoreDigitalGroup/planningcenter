@@ -23,6 +23,7 @@ trait HasUpdate
         );
 
         $this->setResponse($response);
+        $response->throw();
         $this->hydrateFromResponse($response);
 
         return $this;

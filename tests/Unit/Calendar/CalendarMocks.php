@@ -1,4 +1,5 @@
 <?php
+
 /*
  * Encore Digital Group - Planning Center PHP SDK
  * Copyright (c) 2024. Encore Digital Group
@@ -7,8 +8,8 @@
 namespace Tests\Unit\Calendar;
 
 use EncoreDigitalGroup\PlanningCenter\Resources\CalendarEvent as Event;
-use EncoreDigitalGroup\PlanningCenter\Resources\EventInstance;
 use EncoreDigitalGroup\PlanningCenter\Resources\CalendarTagGroup as TagGroup;
+use EncoreDigitalGroup\PlanningCenter\Resources\EventInstance;
 use EncoreDigitalGroup\PlanningCenter\Support\Traits\HasClient;
 use PHPGenesis\Http\HttpClient;
 use Tests\Helpers\BaseMock;
@@ -17,6 +18,9 @@ use Tests\Helpers\ObjectType;
 class CalendarMocks extends BaseMock
 {
     use HasClient;
+
+    /** @var array<string, mixed>|null */
+    private static ?array $eventInstanceCollectionResponse = null;
 
     public const string EVENT_ID = "1";
     public const string EVENT_NAME = "Sample Event";
@@ -27,9 +31,12 @@ class CalendarMocks extends BaseMock
 
     public static function setup(): void
     {
+        self::$eventInstanceCollectionResponse = null;
+
         self::useEventCollection();
         self::useSpecificEvent();
         self::useEventInstanceCollection();
+        self::useEventInstanceRelationshipCollection();
         self::useSpecificEventInstance();
         self::useTagGroupCollection();
         self::useSpecificTagGroup();
@@ -63,6 +70,18 @@ class CalendarMocks extends BaseMock
     }
 
     public static function useEventInstanceCollection(): void
+    {
+        HttpClient::fake([
+            self::HOSTNAME . EventInstance::ENDPOINT => function ($request) {
+                return match ($request->method()) {
+                    "GET" => HttpClient::response(self::$eventInstanceCollectionResponse ?? self::useCollectionResponse(ObjectType::EventInstance)),
+                    default => HttpClient::response([], 405),
+                };
+            },
+        ]);
+    }
+
+    public static function useEventInstanceRelationshipCollection(): void
     {
         HttpClient::fake([
             self::HOSTNAME . Event::ENDPOINT . "/1/event_instances" => function ($request) {
@@ -100,21 +119,14 @@ class CalendarMocks extends BaseMock
 
     public static function useEventInstanceCollectionWithNulls(): void
     {
-        HttpClient::fake([
-            self::HOSTNAME . EventInstance::ENDPOINT => function ($request) {
-                return match ($request->method()) {
-                    "GET" => HttpClient::response([
-                        "data" => [
-                            self::eventInstance(),
-                            null,
-                            self::eventInstance(),
-                        ],
-                        "meta" => ["total_count" => 2, "per_page" => 25],
-                    ]),
-                    default => HttpClient::response([], 405),
-                };
-            },
-        ]);
+        self::$eventInstanceCollectionResponse = [
+            "data" => [
+                self::eventInstance(),
+                null,
+                self::eventInstance(),
+            ],
+            "meta" => ["total_count" => 2, "per_page" => 25],
+        ];
     }
 
     public static function useTagGroupCollection(): void

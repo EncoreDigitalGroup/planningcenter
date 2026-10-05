@@ -17,6 +17,7 @@ trait HasCreate
         );
 
         $this->setResponse($response);
+        $response->throw();
         $this->hydrateFromResponse($response);
 
         return $this;

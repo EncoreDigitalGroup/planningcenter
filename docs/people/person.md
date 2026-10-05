@@ -97,41 +97,111 @@ foreach ($emails->items() as $email) {
 }
 ```
 
+### Create an Email for a Person
+
+Save the Person first, then create an Email through the Person's scoped factory:
+
+```php
+$person = PlanningCenter::make()
+    ->withBasicAuth($clientId, $clientSecret)
+    ->people()
+    ->person()
+    ->withFirstName('John')
+    ->withLastName('Smith')
+    ->save();
+
+$email = $person
+    ->email()
+    ->withAddress('john@example.com')
+    ->withLocation('home')
+    ->withPrimary(true)
+    ->save();
+```
+
+### Get an Email for a Person
+
+Fetch a specific Email through its Person:
+
+```php
+$person = PlanningCenter::make()
+    ->withBasicAuth($clientId, $clientSecret)
+    ->people()
+    ->person()
+    ->withId('123')
+    ->get();
+
+$email = $person
+    ->email()
+    ->withId('456')
+    ->get();
+```
+
+### Update an Email for a Person
+
+Update a specific Email through its Person:
+
+```php
+$email = PlanningCenter::make()
+    ->withBasicAuth($clientId, $clientSecret)
+    ->people()
+    ->person()
+    ->withId('123')
+    ->email()
+    ->withId('456')
+    ->withAddress('updated@example.com')
+    ->save();
+```
+
+### Delete an Email for a Person
+
+Delete a specific Email through its Person:
+
+```php
+PlanningCenter::make()
+    ->withBasicAuth($clientId, $clientSecret)
+    ->people()
+    ->person()
+    ->withId('123')
+    ->email()
+    ->withId('456')
+    ->delete();
+```
+
 ### Attributes
 
 When retrieving people, the following attributes are available:
 
-| Method                       | Type              | Description                                      |
-|------------------------------|-------------------|--------------------------------------------------|
-| `id()`                       | `?string`         | Unique identifier                                |
-| `firstName()`                | `?string`         | First name                                       |
-| `lastName()`                 | `?string`         | Last name                                        |
-| `givenName()`                | `?string`         | Given name                                       |
-| `nickname()`                 | `?string`         | Nickname                                         |
-| `middleName()`               | `?string`         | Middle name                                      |
-| `name()`                     | `?string`         | Full name (read-only, computed by Planning Center) |
-| `birthdate()`                | `?CarbonImmutable`| Date of birth                                    |
-| `anniversary()`              | `?CarbonImmutable`| Anniversary date                                 |
-| `gender()`                   | `?string`         | Gender                                           |
-| `grade()`                    | `?int`            | Grade level                                      |
-| `child()`                    | `?bool`           | Whether this person is a child                   |
-| `graduationYear()`           | `?int`            | Graduation year                                  |
-| `siteAdministrator()`        | `?bool`           | Whether this person is a site administrator      |
-| `accountingAdministrator()`  | `?bool`           | Whether this person is an accounting administrator |
-| `peoplePermissions()`        | `?string`         | People permissions level                         |
-| `membership()`               | `?string`         | Membership type                                  |
-| `inactivatedAt()`            | `?CarbonImmutable`| When the person was inactivated                  |
-| `medicalNotes()`             | `?string`         | Medical notes                                    |
-| `mfaConfigured()`            | `?bool`           | Whether MFA is configured                        |
-| `avatar()`                   | `?string`         | Avatar URL                                       |
-| `demographicAvatarUrl()`     | `?string`         | Demographic avatar URL (read-only)               |
-| `directoryStatus()`          | `?string`         | Directory status                                 |
-| `passedBackgroundCheck()`    | `?bool`           | Whether a background check was passed            |
-| `canCreateForms()`           | `?bool`           | Whether this person can create forms             |
-| `canEmailLists()`            | `?bool`           | Whether this person can email lists              |
-| `schoolType()`               | `?string`         | School type                                      |
-| `status()`                   | `?string`         | Status                                           |
-| `primaryCampusId()`          | `?int`            | Primary campus ID                                |
-| `remoteId()`                 | `?int`            | Remote ID                                        |
-| `createdAt()`                | `?CarbonImmutable`| When the record was created (read-only)          |
-| `updatedAt()`                | `?CarbonImmutable`| When the record was last updated (read-only)     |
+| Method                      | Type               | Description                                        |
+|-----------------------------|--------------------|----------------------------------------------------|
+| `id()`                      | `?string`          | Unique identifier                                  |
+| `firstName()`               | `?string`          | First name                                         |
+| `lastName()`                | `?string`          | Last name                                          |
+| `givenName()`               | `?string`          | Given name                                         |
+| `nickname()`                | `?string`          | Nickname                                           |
+| `middleName()`              | `?string`          | Middle name                                        |
+| `name()`                    | `?string`          | Full name (read-only, computed by Planning Center) |
+| `birthdate()`               | `?CarbonImmutable` | Date of birth                                      |
+| `anniversary()`             | `?CarbonImmutable` | Anniversary date                                   |
+| `gender()`                  | `?string`          | Gender                                             |
+| `grade()`                   | `?int`             | Grade level                                        |
+| `child()`                   | `?bool`            | Whether this person is a child                     |
+| `graduationYear()`          | `?int`             | Graduation year                                    |
+| `siteAdministrator()`       | `?bool`            | Whether this person is a site administrator        |
+| `accountingAdministrator()` | `?bool`            | Whether this person is an accounting administrator |
+| `peoplePermissions()`       | `?string`          | People permissions level                           |
+| `membership()`              | `?string`          | Membership type                                    |
+| `inactivatedAt()`           | `?CarbonImmutable` | When the person was inactivated                    |
+| `medicalNotes()`            | `?string`          | Medical notes                                      |
+| `mfaConfigured()`           | `?bool`            | Whether MFA is configured                          |
+| `avatar()`                  | `?string`          | Avatar URL                                         |
+| `demographicAvatarUrl()`    | `?string`          | Demographic avatar URL (read-only)                 |
+| `directoryStatus()`         | `?string`          | Directory status                                   |
+| `passedBackgroundCheck()`   | `?bool`            | Whether a background check was passed              |
+| `canCreateForms()`          | `?bool`            | Whether this person can create forms               |
+| `canEmailLists()`           | `?bool`            | Whether this person can email lists                |
+| `schoolType()`              | `?string`          | School type                                        |
+| `status()`                  | `?string`          | Status                                             |
+| `primaryCampusId()`         | `?int`             | Primary campus ID                                  |
+| `remoteId()`                | `?int`             | Remote ID                                          |
+| `createdAt()`               | `?CarbonImmutable` | When the record was created (read-only)            |
+| `updatedAt()`               | `?CarbonImmutable` | When the record was last updated (read-only)       |

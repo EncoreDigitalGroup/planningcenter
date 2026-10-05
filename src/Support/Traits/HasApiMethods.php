@@ -27,6 +27,7 @@ trait HasApiMethods
             $instance->hostname() . $instance->endpoint,
             $query
         );
+        $response->throw();
 
         return $instance->buildPaginatorFromResponse($response);
     }

@@ -34,11 +34,14 @@ class Email
 
     protected string $endpoint = self::ENDPOINT;
 
-    public function __construct(string $clientId, string $clientSecret)
+    public function __construct(string $clientId, string $clientSecret, ?string $personId = null)
     {
         $this->attributes = new Collection;
         $this->clientId = $clientId;
         $this->clientSecret = $clientSecret;
+        $this->endpoint = $personId === null
+            ? self::ENDPOINT
+            : "/people/v2/people/{$personId}/emails";
         $this->setApiVersion(PlanningCenterApiVersion::PEOPLE_DEFAULT);
     }
 
