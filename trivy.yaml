@@ -1,0 +1,45 @@
+cache:
+    dir: .trivycache
+
+format: table
+exit-code: 1
+timeout: 10m
+
+scan:
+    scanners:
+        - vuln
+        - secret
+        - misconfig
+    parallel: 4
+    offline: false
+    skip-dirs:
+        - vendor
+        - node_modules
+        - storage
+        - bootstrap/cache
+        - public/build
+        - .trivycache
+    skip-files:
+        - .env
+        - .env.backup
+        - .env.testing
+        - .env.staging
+        - .env.local
+        - .env.production
+
+severity:
+    - HIGH
+    - CRITICAL
+
+pkg:
+    types:
+        - library
+
+vulnerability:
+    ignore-unfixed: true
+
+misconfiguration:
+    include-non-failures: false
+
+secret:
+    config: trivy-secret.yaml

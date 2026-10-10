@@ -10,6 +10,20 @@ use Illuminate\Support\Collection;
 use Tests\Helpers\TestConstants;
 
 describe("Webhook Subscription Tests", function (): void {
+    test("PlanningCenterWebhookEvent: Identifies People Events", function (): void {
+        foreach (PlanningCenterWebhookEvent::peopleEvents() as $event) {
+            expect($event->isPeopleEvent())->toBeTrue()
+                ->and($event->isGroupsEvent())->toBeFalse();
+        }
+    });
+
+    test("PlanningCenterWebhookEvent: Identifies Groups Events", function (): void {
+        foreach (PlanningCenterWebhookEvent::groupEvents() as $event) {
+            expect($event->isGroupsEvent())->toBeTrue()
+                ->and($event->isPeopleEvent())->toBeFalse();
+        }
+    });
+
     test("WebhookSubscription: Can List All Webhook Subscriptions", function (): void {
         $paginator = PlanningCenter::make()
             ->withBasicAuth(TestConstants::CLIENT_ID, TestConstants::CLIENT_SECRET)

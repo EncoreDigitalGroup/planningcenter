@@ -18,4 +18,35 @@ enum PlanningCenterWebhookEvent: string
     case GroupsMembershipCreated = "groups.v2.events.membership.created";
     case GroupsMembershipUpdated = "groups.v2.events.membership.updated";
     case GroupsMembershipDestroyed = "groups.v2.events.membership.destroyed";
+
+    public static function peopleEvents(): array
+    {
+        return [
+            self::PeoplePersonCreated,
+            self::PeoplePersonUpdated,
+            self::PeoplePersonMergerCreated,
+        ];
+    }
+
+    public static function groupEvents(): array
+    {
+        return [
+            self::GroupsGroupCreated,
+            self::GroupsGroupUpdated,
+            self::GroupsGroupDestroyed,
+            self::GroupsMembershipCreated,
+            self::GroupsMembershipUpdated,
+            self::GroupsMembershipDestroyed,
+        ];
+    }
+
+    public function isPeopleEvent(): bool
+    {
+        return in_array($this, self::peopleEvents(), true);
+    }
+
+    public function isGroupsEvent(): bool
+    {
+        return in_array($this, self::groupEvents(), true);
+    }
 }

@@ -2,13 +2,15 @@
 #
 # Required CI/CD Variables (Settings > CI/CD > Variables):
 #   COMPOSER_AUTH           — masked; JSON authentication for private Composer packages (if any private deps).
+#   ENCOREBOT_ACCESS_TOKEN  — masked; API-scoped token for release notes and Trivy MR comments.
 #
 # Required project setting:
 #   Settings > Repository > "Allow CI job token to push to this project" must be
-#   enabled for the code_style job to push commits back to the MR branch.
+#   enabled for the code_style job to push formatting commits back to the MR branch.
 #
 # Pipeline overview:
-#   code_style (MR only) → static_analysis + test (MR + main push) → release (semver tags incl. rc/alpha/beta)
+#   MR:       trivy_scan, then jobs whose relevant PHP files changed.
+#   v*.*.*:   full quality, then release.
 
 workflow:
     auto_cancel:
@@ -22,44 +24,68 @@ include:
             - /workflows/php/static-analysis.yml
             - /workflows/php/test.yml
             - /workflows/gitlab/create-release.yml
+            - /workflows/security/trivy-scan.yml
 
 stages:
+    - security
     - quality
+    - test
     - release
+
+default:
+    interruptible: true
+
+# Release tags always run the complete quality suite before a release is created.
+# Overriding a job's `rules` replaces the template's, so each job references this
+# shared rule rather than duplicating it.
+.rules:
+    release_tag: &release_tag_rule
+        if: $CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+/
+
+trivy_scan:
+    stage: security
+    extends: .trivy:scan
 
 code_style:
     stage: quality
     extends: .php:code-style
-    interruptible: true
-    image:
-        name: "$PHP_CI_IMAGE"
-        pull_policy: always
+    image: "$PHP_CI_IMAGE"
+    # Rector and Duster only format PHP, so skip MRs with no PHP changes.
     rules:
         -   if: $CI_PIPELINE_SOURCE == "merge_request_event"
+            changes:
+                - "**/*.php"
+        - *release_tag_rule
 
 static_analysis:
     stage: quality
     extends: .php:static-analysis
-    interruptible: true
     variables:
         PHPSTAN_PATHS: "src/"
-    image:
-        name: "$PHP_CI_IMAGE"
-        pull_policy: always
+    image: "$PHP_CI_IMAGE"
+    # Run PHPStan when source, its configuration, or dependency type stubs change.
     rules:
         -   if: $CI_PIPELINE_SOURCE == "merge_request_event"
-        -   if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
+            changes:
+                - "**/*.php"
+                - "phpstan.neon"
+                - "composer.json"
+                - "composer.lock"
+        - *release_tag_rule
 
 test:
-    stage: quality
+    stage: test
     extends: .php:test
-    interruptible: true
-    image:
-        name: "$PHP_CI_IMAGE"
-        pull_policy: always
+    image: "$PHP_CI_IMAGE"
+    # Run Pest when code, dependencies, or its configuration changes.
     rules:
         -   if: $CI_PIPELINE_SOURCE == "merge_request_event"
-        -   if: $CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"
+            changes:
+                - "**/*.php"
+                - "composer.json"
+                - "composer.lock"
+                - "phpunit.xml"
+        - *release_tag_rule
 
 release:
     stage: release
